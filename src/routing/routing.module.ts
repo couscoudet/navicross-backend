@@ -4,11 +4,12 @@ import { RoutingService } from './routing.service';
 import { OsrmService } from './services/osrm.service';
 import { EventsModule } from '../events/events.module';
 import { ClosuresModule } from '../closures/closures.module';
+import { ValhallaService } from './services/valhalla.service';
 
 @Module({
   imports: [EventsModule, ClosuresModule],
   controllers: [RoutingController],
-  providers: [RoutingService, OsrmService],
+  providers: [RoutingService, OsrmService, ValhallaService],
   exports: [RoutingService],
 })
 export class RoutingModule {}

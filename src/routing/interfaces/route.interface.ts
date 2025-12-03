@@ -21,6 +21,7 @@ export interface RouteResponse {
   };
   steps: RouteStep[];
   warnings: string[];
+  routing_engine: string;
 }
 
 export interface OSRMResponse {
@@ -45,4 +46,29 @@ export interface OSRMResponse {
       }>;
     }>;
   }>;
+}
+
+export interface ValhallaRequest {
+  locations: Array<{ lat: number; lon: number }>;
+  costing: string;
+  exclude_polygons?: number[][][]; // Array of polygon coordinates
+}
+
+export interface ValhallaResponse {
+  trip: {
+    summary: {
+      length: number; // kilometers
+      time: number; // seconds
+    };
+    legs: Array<{
+      shape: string; // encoded polyline
+      maneuvers: Array<{
+        instruction: string;
+        length: number;
+        time: number;
+        type: number;
+        street_names?: string[];
+      }>;
+    }>;
+  };
 }
