@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { RateLimiterService } from './rate-limiter.service';
 import {
   ValhallaRequest,
   ValhallaResponse,
@@ -9,13 +10,33 @@ import {
 export class ValhallaService {
   private readonly valhallaUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly rateLimiter: RateLimiterService,
+  ) {
     this.valhallaUrl =
       this.configService.get<string>('VALHALLA_URL') ||
       'https://valhalla1.openstreetmap.de';
   }
 
   async calculateRoute(
+    origin: [number, number],
+    destination: [number, number],
+    profile: string,
+    excludePolygons: any[] = [],
+  ): Promise<ValhallaResponse> {
+    // Utiliser le rate limiter pour ne pas surcharger l'API
+    return this.rateLimiter.schedule(async () => {
+      return this._calculateRouteInternal(
+        origin,
+        destination,
+        profile,
+        excludePolygons,
+      );
+    });
+  }
+
+  private async _calculateRouteInternal(
     origin: [number, number],
     destination: [number, number],
     profile: string,
@@ -40,14 +61,11 @@ export class ValhallaService {
             coord[1],
           ]),
         );
-        console.log(
-          '🚧 Valhalla exclude_polygons:',
-          JSON.stringify(request.exclude_polygons, null, 2),
-        );
       }
 
       const url = `${this.valhallaUrl}/route`;
       console.log('🚧 Valhalla request:', JSON.stringify(request, null, 2));
+      console.log('seconds : ' + new Date().getSeconds());
 
       const response = await fetch(url, {
         method: 'POST',
