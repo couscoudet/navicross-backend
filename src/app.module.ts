@@ -6,6 +6,7 @@ import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
 import { EventsModule } from './events/events.module';
 import { ClosuresModule } from './closures/closures.module';
+import { RoutingModule } from './routing/routing.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ClosuresModule } from './closures/closures.module';
     AuthModule,
     EventsModule,
     ClosuresModule,
+    RoutingModule,
   ],
 })
 export class AppModule {}
