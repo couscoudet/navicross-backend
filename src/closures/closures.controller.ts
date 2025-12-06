@@ -8,7 +8,10 @@ import {
   Param,
   UseGuards,
   ParseIntPipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ClosuresService } from './closures.service';
 import { CreateClosureDto } from './dto/create-closure.dto';
 import { UpdateClosureDto } from './dto/update-closure.dto';
@@ -38,6 +41,17 @@ export class ClosuresController {
     @CurrentUser() user: UserPublic,
   ) {
     return this.closuresService.create(slug, dto, user);
+  }
+
+  @Post('events/:slug/closures/upload-gpx')
+  @UseGuards(AuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  uploadGpx(
+    @Param('slug') slug: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: UserPublic,
+  ) {
+    return this.closuresService.uploadGpx(slug, file, user);
   }
 
   @Patch('closures/:id')
