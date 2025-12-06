@@ -3,44 +3,59 @@
 # ============================================
 FROM node:20-alpine AS dependencies
 
+# Install pnpm globally
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files (pnpm requires pnpm-lock.yaml)
+COPY package.json pnpm-lock.yaml ./
 
 # Install ALL dependencies (including devDependencies needed for build)
-RUN npm ci
+# --frozen-lockfile ensures reproducible builds (equivalent to npm ci)
+RUN pnpm install --frozen-lockfile
 
 # ============================================
 # Stage 2: Build
 # ============================================
 FROM node:20-alpine AS builder
 
+# Install pnpm globally
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 WORKDIR /app
 
 # Copy dependencies from previous stage
 COPY --from=dependencies /app/node_modules ./node_modules
 
+# Copy package.json for pnpm scripts
+COPY package.json pnpm-lock.yaml ./
+
 # Copy source code and configuration
 COPY . .
 
-# Build the NestJS application
-RUN npm run build
+# Build the NestJS application using pnpm
+RUN pnpm run build
 
 # ============================================
 # Stage 3: Production Dependencies
 # ============================================
 FROM node:20-alpine AS production-deps
 
+# Install pnpm globally
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml ./
 
 # Install only production dependencies
-RUN npm ci --omit=dev && \
-    npm cache clean --force
+# --prod flag installs only production dependencies
+# --frozen-lockfile ensures reproducible builds
+RUN pnpm install --prod --frozen-lockfile && \
+    pnpm store prune
 
 # ============================================
 # Stage 4: Production Runtime
@@ -62,8 +77,8 @@ COPY --from=production-deps /app/node_modules ./node_modules
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
 
-# Copy package.json for metadata
-COPY package*.json ./
+# Copy package.json for metadata (pnpm-lock.yaml not needed in runtime)
+COPY package.json ./
 
 # Create non-root user and set ownership
 RUN addgroup -g 1001 -S nodejs && \
