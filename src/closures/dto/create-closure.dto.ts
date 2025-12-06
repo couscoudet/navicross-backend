@@ -8,6 +8,9 @@ import {
 
 export class CreateClosureDto {
   @IsString()
+  name: string;
+
+  @IsString()
   @IsIn(['barrier', 'segment', 'zone'])
   type: 'barrier' | 'segment' | 'zone';
 
@@ -23,4 +26,8 @@ export class CreateClosureDto {
 
   @IsDateString()
   end_time: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 }

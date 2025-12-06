@@ -18,27 +18,31 @@ export class ClosuresRepository {
   async create(data: ClosureCreate): Promise<Closure> {
     try {
       const row = await this.db.queryOne<any>(
-        `INSERT INTO closures (event_id, type, polygon, center, points, start_time, end_time)
+        `INSERT INTO closures (event_id, name, type, polygon, center, points, start_time, end_time, description)
          VALUES (
-           $1, 
-           $2, 
-           ST_GeomFromGeoJSON($3),
-           ST_Centroid(ST_GeomFromGeoJSON($3)),
-           $4,
+           $1,
+           $2,
+           $3,
+           ST_GeomFromGeoJSON($4),
+           ST_Centroid(ST_GeomFromGeoJSON($4)),
            $5,
-           $6
+           $6,
+           $7,
+           $8
          )
-         RETURNING id, event_id, type,
+         RETURNING id, event_id, name, type,
                    ST_AsGeoJSON(polygon) as polygon,
                    ST_AsGeoJSON(center) as center,
-                   points, start_time, end_time, created_at, updated_at`,
+                   points, start_time, end_time, description, created_at, updated_at`,
         [
           data.event_id,
+          data.name,
           data.type,
           JSON.stringify(data.polygon),
           data.points ? JSON.stringify(data.points) : null,
           data.start_time,
           data.end_time,
+          data.description || null,
         ],
       );
 
@@ -57,10 +61,10 @@ export class ClosuresRepository {
   async findByEventId(eventId: number): Promise<ClosurePublic[]> {
     try {
       const rows = await this.db.queryMany<any>(
-        `SELECT id, type,
+        `SELECT id, name, type,
                 ST_AsGeoJSON(polygon) as polygon,
                 ST_AsGeoJSON(center) as center,
-                start_time, end_time
+                start_time, end_time, description
          FROM closures
          WHERE event_id = $1
          ORDER BY start_time ASC`,
@@ -78,10 +82,10 @@ export class ClosuresRepository {
   async findActiveByEventId(eventId: number): Promise<ClosurePublic[]> {
     try {
       const rows = await this.db.queryMany<any>(
-        `SELECT id, type,
+        `SELECT id, name, type,
                 ST_AsGeoJSON(polygon) as polygon,
                 ST_AsGeoJSON(center) as center,
-                start_time, end_time
+                start_time, end_time, description
          FROM closures
          WHERE event_id = $1
            AND NOW() >= start_time
@@ -101,10 +105,10 @@ export class ClosuresRepository {
   async findById(id: number): Promise<Closure | null> {
     try {
       const row = await this.db.queryOne<any>(
-        `SELECT id, event_id, type,
+        `SELECT id, event_id, name, type,
                 ST_AsGeoJSON(polygon) as polygon,
                 ST_AsGeoJSON(center) as center,
-                points, start_time, end_time, created_at, updated_at
+                points, start_time, end_time, description, created_at, updated_at
          FROM closures
          WHERE id = $1`,
         [id],
@@ -124,6 +128,10 @@ export class ClosuresRepository {
       const values: any[] = [];
       let paramIndex = 1;
 
+      if (data.name !== undefined) {
+        updates.push(`name = $${paramIndex++}`);
+        values.push(data.name);
+      }
       if (data.polygon !== undefined) {
         updates.push(`polygon = ST_GeomFromGeoJSON($${paramIndex})`);
         updates.push(
@@ -144,6 +152,10 @@ export class ClosuresRepository {
         updates.push(`end_time = $${paramIndex++}`);
         values.push(data.end_time);
       }
+      if (data.description !== undefined) {
+        updates.push(`description = $${paramIndex++}`);
+        values.push(data.description || null);
+      }
 
       if (updates.length === 0) {
         throw new Error('No fields to update');
@@ -156,10 +168,10 @@ export class ClosuresRepository {
         `UPDATE closures
          SET ${updates.join(', ')}
          WHERE id = $${paramIndex}
-         RETURNING id, event_id, type,
+         RETURNING id, event_id, name, type,
                    ST_AsGeoJSON(polygon) as polygon,
                    ST_AsGeoJSON(center) as center,
-                   points, start_time, end_time, created_at, updated_at`,
+                   points, start_time, end_time, description, created_at, updated_at`,
         values,
       );
 
@@ -221,12 +233,14 @@ export class ClosuresRepository {
 
   private parseClosurePublic(row: any): ClosurePublic {
     return {
+      name: row.name,
       id: row.id,
       type: row.type,
       polygon: row.polygon ? JSON.parse(row.polygon) : null,
       center: row.center ? JSON.parse(row.center) : null,
       start_time: row.start_time,
       end_time: row.end_time,
+      description: row.description,
     };
   }
 }

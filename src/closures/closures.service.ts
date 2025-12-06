@@ -35,11 +35,13 @@ export class ClosuresService {
 
     return this.closuresRepo.create({
       event_id: event.id,
+      name: dto.name,
       type: dto.type,
       polygon: dto.polygon,
       points: dto.points,
       start_time: new Date(dto.start_time),
       end_time: new Date(dto.end_time),
+      description: dto.description,
     });
   }
 
@@ -79,11 +81,13 @@ export class ClosuresService {
       try {
         const result = await this.closuresRepo.create({
           event_id: event.id,
+          name: closure.name || `${closure.type} ${created.length + 1}`,
           type: closure.type,
           polygon: closure.polygon,
           points: closure.points,
           start_time: closure.start_time,
           end_time: closure.end_time,
+          description: undefined,
         });
         created.push(result);
       } catch (error: any) {
@@ -138,10 +142,12 @@ export class ClosuresService {
     }
 
     return this.closuresRepo.update(id, {
+      name: dto.name,
       polygon: dto.polygon,
       points: dto.points,
       start_time: dto.start_time ? new Date(dto.start_time) : undefined,
       end_time: dto.end_time ? new Date(dto.end_time) : undefined,
+      description: dto.description,
     });
   }
 

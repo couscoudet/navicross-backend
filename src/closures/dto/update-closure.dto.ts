@@ -1,6 +1,10 @@
-import { IsDateString, IsOptional, IsObject } from 'class-validator';
+import { IsDateString, IsOptional, IsObject, IsString } from 'class-validator';
 
 export class UpdateClosureDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
   @IsOptional()
   @IsObject()
   polygon?: any;
@@ -16,4 +20,8 @@ export class UpdateClosureDto {
   @IsOptional()
   @IsDateString()
   end_time?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 }
