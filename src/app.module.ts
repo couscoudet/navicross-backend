@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { EventsModule } from './events/events.module';
 import { ClosuresModule } from './closures/closures.module';
 import { RoutingModule } from './routing/routing.module';
+import { GeocodeModule } from './geocode/geocode.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { RoutingModule } from './routing/routing.module';
     EventsModule,
     ClosuresModule,
     RoutingModule,
+    GeocodeModule,
   ],
 })
 export class AppModule {}
