@@ -12,7 +12,7 @@ export class RateLimiterService {
     });
 
     // Logs pour monitoring
-    this.limiter.on('failed', (error, jobInfo) => {
+    this.limiter.on('failed', (error) => {
       console.warn(`⚠️ Rate limiter: Job failed, retrying...`, error.message);
     });
 
