@@ -1,6 +1,8 @@
 import {
   Controller,
   Post,
+  Get,
+  UseGuards,
   Body,
   Headers,
   HttpCode,
@@ -11,6 +13,8 @@ import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { SessionGuard } from './guards/session.guard';
+import { CurrentUser } from './decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -49,14 +53,20 @@ export class AuthController {
     return { message: 'Logged out successfully' };
   }
 
+  @Get('me')
+  @UseGuards(SessionGuard)
+  getMe(@CurrentUser() user: any) {
+    return { user };
+  }
+
   private setSessionCookie(res: Response, sessionId: string) {
     const isProduction = process.env.NODE_ENV === 'production';
 
     res.cookie('session_id', sessionId, {
-      httpOnly: true, // Protection XSS
-      secure: isProduction, // HTTPS en production
-      sameSite: isProduction ? 'none' : 'lax', // Cross-domain en production
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      maxAge: 1000,
       path: '/',
     });
   }
